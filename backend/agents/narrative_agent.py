@@ -20,6 +20,7 @@ class NarrativeAgent:
     async def run_full_analysis(self) -> dict:
         """
         Main pipeline coordinating market data and AI services.
+        Steps: SoDEX tickers → top movers → klines → SoSoValue context → Hermes AI → signal → tweets
         """
         current_time = time.time()
         # Check cache
@@ -40,27 +41,39 @@ class NarrativeAgent:
         for gainer in top_gainers:
             symbol = gainer.get("symbol")
             if symbol:
-                klines = await self.sodex.get_klines(symbol, interval="1h", limit=24)
-                gainers_klines[symbol] = klines
+                try:
+                    klines = await self.sodex.get_klines(symbol, interval="1h", limit=24)
+                    gainers_klines[symbol] = klines
+                except Exception as e:
+                    print(f"[NarrativeAgent] Failed to fetch klines for {symbol}: {e}")
+                    gainers_klines[symbol] = []
 
-        # 4. Fetch contextual data from SoSoValue
-        hot_news = await self.sosovalue.get_hot_news()
-        macro_events = await self.sosovalue.get_macro_events()
+        # 4. Fetch contextual data from SoSoValue (graceful fallback)
+        hot_news_list = []
+        macro_events_list = []
+        try:
+            hot_news = await self.sosovalue.get_hot_news()
+            hot_news_list = hot_news if isinstance(hot_news, list) else []
+        except Exception as e:
+            print(f"[NarrativeAgent] SoSoValue hot_news failed (non-critical): {e}")
 
-        # Build an enriched context dictionary to send to Hermes
-        hot_news_list = hot_news if isinstance(hot_news, list) else []
-        macro_events_list = macro_events if isinstance(macro_events, list) else []
-        
+        try:
+            macro_events = await self.sosovalue.get_macro_events()
+            macro_events_list = macro_events if isinstance(macro_events, list) else []
+        except Exception as e:
+            print(f"[NarrativeAgent] SoSoValue macro_events failed (non-critical): {e}")
+
+        # Build enriched context dictionary for Hermes
         enriched_context = {
             "tickers": tickers,
-            "soso_hot_news": hot_news_list[:5], # limit to top 5 news
-            "soso_macro_events": macro_events_list[:3] # limit to top 3 events
+            "soso_hot_news": hot_news_list[:5],
+            "soso_macro_events": macro_events_list[:3]
         }
 
-        # 5. Send enriched context to HermesService to get narrative text
+        # 5. Send enriched context to HermesService for narrative analysis
         narrative_summary = await self.hermes.analyze_market_narrative(enriched_context)
 
-        # 5. For the #1 top gainer, run generate_signal
+        # 6. For the #1 top gainer, generate a featured signal
         featured_signal = {}
         if top_gainers:
             top_symbol = top_gainers[0].get("symbol")
@@ -69,7 +82,7 @@ class NarrativeAgent:
                 featured_signal = await self.hermes.generate_signal(top_symbol, top_klines, narrative_summary)
                 featured_signal["symbol"] = top_symbol
 
-        # 7. Run generate_tweet_thread
+        # 7. Generate tweet thread
         tweet_thread = await self.hermes.generate_tweet_thread(narrative_summary, top_gainers)
 
         # 8. Return the structured dictionary
@@ -80,7 +93,9 @@ class NarrativeAgent:
             "narrative_summary": narrative_summary,
             "featured_signal": featured_signal,
             "tweet_thread": tweet_thread,
-            "raw_ticker_count": raw_ticker_count
+            "raw_ticker_count": raw_ticker_count,
+            "soso_hot_news": hot_news_list[:5],
+            "soso_macro_events": macro_events_list[:3]
         }
 
         # Update cache

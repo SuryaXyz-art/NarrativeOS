@@ -53,12 +53,12 @@ class HermesService:
                     return ""
         return ""
 
-    async def analyze_market_narrative(self, ticker_data: list) -> str:
-        """Identify top trending narratives based on market data."""
-        system_prompt = "You are a crypto market analyst specializing in narrative detection. Identify the top 3 trending narratives based on price action and volume. Be specific about what sectors or themes are gaining momentum. Format as: NARRATIVE 1: [name] - [1 sentence explanation]. Keep response under 150 words."
+    async def analyze_market_narrative(self, ticker_data: dict | list) -> str:
+        """Identify top trending narratives based on market data and optional macro context."""
+        system_prompt = "You are a crypto market analyst specializing in narrative detection. Identify the top 3 trending narratives based on price action, volume, and any macro/news context provided. Be specific about what sectors or themes are gaining momentum. Format as: NARRATIVE 1: [name] - [1 sentence explanation]. Keep response under 150 words."
         
-        # We cap the ticker data to avoid exceeding context limits if the list is massive
-        user_prompt = f"Here is the latest ticker data:\n{json.dumps(ticker_data)[:3000]}"
+        # We cap the ticker data to avoid exceeding context limits if the data is massive
+        user_prompt = f"Here is the latest market data:\n{json.dumps(ticker_data)[:3000]}"
         
         messages = [
             {"role": "system", "content": system_prompt},

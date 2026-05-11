@@ -8,20 +8,28 @@ import uvicorn
 from agents.narrative_agent import NarrativeAgent
 from services.sodex_service import SoDEXService
 from services.hermes_service import HermesService
+from services.sosovalue_service import SoSoValueService
 
 agent = None
 sodex_service = None
 hermes_service = None
+sosovalue_service = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global agent, sodex_service, hermes_service
+    global agent, sodex_service, hermes_service, sosovalue_service
     agent = NarrativeAgent()
     sodex_service = SoDEXService()
     hermes_service = HermesService()
+    sosovalue_service = SoSoValueService()
     yield
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    title="NarrativeOS API",
+    description="AI-powered crypto market narrative engine",
+    version="1.0.0",
+    lifespan=lifespan
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -38,6 +46,7 @@ class ExplainRequest(BaseModel):
 async def health():
     return {
         "status": "ok",
+        "service": "NarrativeOS",
         "timestamp": datetime.now(timezone.utc).isoformat()
     }
 
@@ -66,6 +75,30 @@ async def get_markets():
 async def get_tickers():
     try:
         return await sodex_service.get_ticker_all()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/news")
+async def get_news():
+    """Fetch hot crypto news from SoSoValue."""
+    try:
+        return await sosovalue_service.get_hot_news()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/macro")
+async def get_macro_events():
+    """Fetch macro economic events from SoSoValue."""
+    try:
+        return await sosovalue_service.get_macro_events()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/etf/{etf_type}")
+async def get_etf_data(etf_type: str = "btc"):
+    """Fetch ETF data from SoSoValue."""
+    try:
+        return await sosovalue_service.get_etf_data(etf_type)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

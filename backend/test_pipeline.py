@@ -1,51 +1,123 @@
 import asyncio
+import sys
+import io
+
+# Fix Windows console encoding
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+
 from services.sodex_service import SoDEXService
 from services.hermes_service import HermesService
+from services.sosovalue_service import SoSoValueService
 from agents.narrative_agent import NarrativeAgent
 
 async def main():
-    print("=" * 50)
+    print("=" * 60)
     print("  NarrativeOS Pipeline Test")
-    print("=" * 50)
+    print("=" * 60)
 
+    # -- TEST 1: SoDEX Connection --
     print("\n=== TEST 1: SoDEX Connection ===")
     sodex = SoDEXService()
-    tickers = await sodex.get_ticker_all(use_testnet=True)
-    print(f"Fetched {len(tickers)} tickers")
-    if tickers:
+    tickers = []
+    try:
+        tickers = await sodex.get_ticker_all(use_testnet=True)
         if isinstance(tickers, list):
-            print("First ticker:", tickers[0])
+            print(f"  [OK] Fetched {len(tickers)} tickers")
+            if tickers:
+                print(f"  First ticker: {tickers[0]}")
         elif isinstance(tickers, dict):
+            print(f"  [OK] Fetched {len(tickers)} tickers (dict format)")
             first_key = list(tickers.keys())[0]
-            print(f"First ticker ({first_key}):", tickers[first_key])
+            print(f"  First ticker ({first_key}): {tickers[first_key]}")
+        else:
+            print(f"  [WARN] Unexpected ticker format: {type(tickers)}")
+    except Exception as e:
+        print(f"  [FAIL] SoDEX connection failed: {e}")
 
+    # -- TEST 2: Top Movers --
     print("\n=== TEST 2: Top Movers ===")
-    movers = await sodex.get_top_movers(use_testnet=True)
-    print("Top gainers:", movers.get("gainers", [])[:3])
-    print("Top losers:", movers.get("losers", [])[:3])
+    try:
+        movers = await sodex.get_top_movers(use_testnet=True)
+        gainers = movers.get("gainers", [])
+        losers = movers.get("losers", [])
+        print(f"  [OK] Top gainers: {len(gainers)} found")
+        for g in gainers[:3]:
+            print(f"       {g.get('symbol', '?')} -- {g.get('priceChangePercent', g.get('changePercent', '?'))}%")
+        print(f"  [OK] Top losers: {len(losers)} found")
+        for l in losers[:3]:
+            print(f"       {l.get('symbol', '?')} -- {l.get('priceChangePercent', l.get('changePercent', '?'))}%")
+    except Exception as e:
+        print(f"  [FAIL] Top movers failed: {e}")
 
-    print("\n=== TEST 3: Hermes AI Narrative ===")
+    # -- TEST 3: SoSoValue Integration --
+    print("\n=== TEST 3: SoSoValue Integration ===")
+    soso = SoSoValueService()
+    try:
+        hot_news = await soso.get_hot_news()
+        print(f"  [OK] Hot News: {len(hot_news)} items" if hot_news else "  [WARN] Hot News: empty (API may be unavailable)")
+    except Exception as e:
+        print(f"  [FAIL] Hot News error: {e}")
+    
+    try:
+        macro_events = await soso.get_macro_events()
+        print(f"  [OK] Macro Events: {len(macro_events)} items" if macro_events else "  [WARN] Macro Events: empty (API may be unavailable)")
+    except Exception as e:
+        print(f"  [FAIL] Macro Events error: {e}")
+
+    # -- TEST 4: Hermes AI Narrative --
+    print("\n=== TEST 4: Hermes AI Narrative ===")
     hermes = HermesService()
     if tickers:
-        sample = tickers[:10] if isinstance(tickers, list) else list(tickers.items())[:10]
-        narrative = await hermes.analyze_market_narrative(sample)
-        print("Narrative:", narrative[:200] if narrative else "(empty response)")
+        try:
+            sample = tickers[:10] if isinstance(tickers, list) else list(tickers.items())[:10]
+            narrative = await hermes.analyze_market_narrative(sample)
+            if narrative:
+                print(f"  [OK] Narrative generated ({len(narrative)} chars)")
+                print(f"  Preview: {narrative[:200]}...")
+            else:
+                print("  [WARN] Narrative returned empty (check NOUS_API_KEY)")
+        except Exception as e:
+            print(f"  [FAIL] Hermes narrative error: {e}")
     else:
-        print("Skipped — no ticker data available")
+        print("  [SKIP] Skipped -- no ticker data available")
 
-    print("\n=== TEST 4: Full Agent Pipeline ===")
+    # -- TEST 5: Explain Like I'm Dumb --
+    print("\n=== TEST 5: Explain Like I'm Dumb ===")
+    try:
+        explanation = await hermes.explain_like_im_dumb("Blockchain")
+        if explanation:
+            print(f"  [OK] Explanation generated ({len(explanation)} chars)")
+            print(f"  Preview: {explanation[:150]}...")
+        else:
+            print("  [WARN] Explanation returned empty")
+    except Exception as e:
+        print(f"  [FAIL] Explain error: {e}")
+
+    # -- TEST 6: Full Agent Pipeline --
+    print("\n=== TEST 6: Full Agent Pipeline ===")
     agent = NarrativeAgent()
-    result = await agent.run_full_analysis()
-    print("Full analysis keys:", list(result.keys()))
-    print("Signal:", result.get("featured_signal"))
-    tweets = result.get("tweet_thread", [])
-    if tweets:
-        print("Tweet 1:", tweets[0][:100])
-    else:
-        print("Tweet thread: (empty)")
+    try:
+        result = await agent.run_full_analysis()
+        print(f"  [OK] Full analysis completed!")
+        print(f"  Keys: {list(result.keys())}")
+        print(f"  Tickers tracked: {result.get('raw_ticker_count', '?')}")
+        signal = result.get('featured_signal', {})
+        print(f"  Signal: {signal.get('signal', 'N/A')} "
+              f"({signal.get('confidence', '?')}% confidence)")
+        tweets = result.get("tweet_thread", [])
+        if tweets:
+            print(f"  Tweets: {len(tweets)} generated")
+            print(f"  Tweet 1: {tweets[0][:100]}...")
+        else:
+            print("  Tweets: (none generated)")
+        print(f"  News items: {len(result.get('soso_hot_news', []))}")
+        print(f"  Macro events: {len(result.get('soso_macro_events', []))}")
+    except Exception as e:
+        print(f"  [FAIL] Full pipeline error: {e}")
 
-    print("\n" + "=" * 50)
-    print("  ✅ All tests complete!")
-    print("=" * 50)
+    print("\n" + "=" * 60)
+    print("  All tests complete!")
+    print("=" * 60)
 
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())

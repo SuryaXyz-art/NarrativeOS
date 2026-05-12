@@ -75,7 +75,8 @@ class SoDEXService:
         try:
             tickers = await self.get_ticker_all(use_testnet=use_testnet)
             if not tickers or tickers == FALLBACK_TICKERS:
-                return {"gainers": [], "losers": []}
+                from fallback_data import FALLBACK_MOVERS
+                return FALLBACK_MOVERS
 
             # If it returns a dict of symbol -> data, convert to list
             if isinstance(tickers, dict):

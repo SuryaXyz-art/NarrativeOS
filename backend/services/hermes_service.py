@@ -7,7 +7,7 @@ load_dotenv()
 
 NOUS_API_KEY = os.getenv("NOUS_API_KEY", "")
 NOUS_BASE_URL = "https://inference-api.nousresearch.com/v1"
-NOUS_MODEL = "Hermes-3-Llama-3.1-70B"
+NOUS_MODEL = "nousresearch/hermes-4-70b"
 
 async def call_hermes(system_prompt: str, user_prompt: str, max_tokens: int = 1000) -> str:
     """Call Nous Hermes AI. Returns text or fallback string on any error."""

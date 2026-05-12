@@ -199,8 +199,8 @@ export default function App() {
           {/* Left column (1/4): TopMovers + Market Stats */}
           <div className="lg:col-span-1 space-y-4">
             <TopMovers
-              gainers={analysisData?.top_gainers || []}
-              losers={analysisData?.top_losers || []}
+              gainers={analysisData?.top_movers?.gainers || analysisData?.top_gainers || []}
+              losers={analysisData?.top_movers?.losers || analysisData?.top_losers || []}
               onSignalFetch={handleSignalFetch}
             />
 
@@ -243,14 +243,18 @@ export default function App() {
             <SignalCard signal={activeSignal} />
           </div>
 
-          {/* Right column (1/4): TweetThread + ExplainBox */}
+          {/* Right column (1/4): TweetThread */}
           <div className="lg:col-span-1 space-y-4">
             <TweetThread
-              tweets={analysisData?.tweet_thread || []}
+              tweets={analysisData?.tweets || analysisData?.tweet_thread || []}
               onRefresh={handleRefreshNow}
             />
-            <ExplainBox />
           </div>
+        </div>
+
+        {/* ─── Explain Like I'm Dumb — Full-width section ─── */}
+        <div className="mt-6 max-w-[1800px] mx-auto">
+          <ExplainBox />
         </div>
       </main>
 

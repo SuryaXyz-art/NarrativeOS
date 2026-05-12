@@ -21,8 +21,11 @@ export default function TopMovers({ gainers, losers, onSignalFetch }) {
 
   const getSymbol = (item) => item.symbol || item.pair || '???';
   const getChange = (item) => {
-    const val = parseFloat(item.priceChangePercent || item.changePercent || item.change || 0);
-    return isNaN(val) ? 0 : val;
+    const raw = String(item.priceChangePercent || item.changePercent || item.change || '0');
+    const val = parseFloat(raw.replace('%', '').replace('+', ''));
+    // Preserve negative sign
+    const sign = raw.trim().startsWith('-') ? -1 : 1;
+    return isNaN(val) ? 0 : sign * Math.abs(val);
   };
   const getPrice = (item) => item.lastPrice || item.price || item.last || '—';
   const getVolume = (item) => {

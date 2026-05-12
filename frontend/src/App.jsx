@@ -54,7 +54,7 @@ export default function App() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       setAnalysisData(data);
-      setActiveSignal(data.featured_signal || null);
+      setActiveSignal(data.featured_signal || (data.signals && data.signals[0]) || null);
       setLastUpdated(new Date().toLocaleTimeString('en-US', { hour12: false }));
       setError(null);
       setIsConnected(true);
@@ -252,8 +252,8 @@ export default function App() {
           </div>
         </div>
 
-        {/* ─── Explain Like I'm Dumb — Full-width section ─── */}
-        <div className="mt-6 max-w-[1800px] mx-auto">
+        {/* ─── Explain Like I'm Dumb — Full-width centered section ─── */}
+        <div className="mt-6 max-w-2xl mx-auto">
           <ExplainBox />
         </div>
       </main>

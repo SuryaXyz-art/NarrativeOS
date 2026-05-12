@@ -43,13 +43,10 @@ class SoSoValueService:
             return []
 
     async def get_hot_news(self) -> List[Dict]:
-        """Fetch hot news from SoSoValue. Tries /news/hot first, falls back to /news."""
-        # Try primary endpoint
+        """Fetch hot news from SoSoValue."""
         result = await self._get("/news/hot")
-        if isinstance(result, list) and len(result) > 0:
-            return result
-        # Fallback to alternate path
-        result = await self._get("/news")
+        if isinstance(result, dict) and "list" in result:
+            return result["list"]
         if isinstance(result, list):
             return result
         return []
@@ -63,11 +60,14 @@ class SoSoValueService:
 
     async def get_etf_data(self, etf_type: str = "btc") -> List[Dict]:
         """Fetch ETF dashboard data from SoSoValue."""
-        # Try different endpoint patterns
-        for path in [f"/etf/{etf_type}/flows", f"/etf/{etf_type}", f"/etf/flows"]:
-            result = await self._get(path)
-            if isinstance(result, list) and len(result) > 0:
-                return result
-            if isinstance(result, dict) and "error" not in result:
-                return [result]
+        symbol = etf_type.upper()
+        params = {"symbol": symbol, "country_code": "US"}
+        result = await self._get("/etfs/summary-history", params=params)
+        
+        if isinstance(result, dict) and "list" in result:
+            return result["list"]
+        if isinstance(result, list):
+            return result
+        if isinstance(result, dict) and "error" not in result:
+            return [result]
         return []

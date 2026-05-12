@@ -25,7 +25,7 @@ export default function ExplainBox() {
       const data = await res.json();
       setExplanation(data.explanation || 'No explanation returned.');
     } catch (err) {
-      setError('Failed to get explanation. Is the backend running?');
+      setError('Could not connect to AI service');
       console.error('Explain error:', err);
     } finally {
       setLoading(false);
@@ -58,7 +58,7 @@ export default function ExplainBox() {
             disabled={loading || !topic.trim()}
             className="px-3 py-2 bg-accent/10 border border-accent/30 rounded font-mono text-xs text-accent hover:bg-accent/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
           >
-            {loading ? '...' : 'Ask'}
+            Ask
           </button>
         </form>
 

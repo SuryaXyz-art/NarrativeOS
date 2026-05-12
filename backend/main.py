@@ -4,24 +4,21 @@ from pydantic import BaseModel
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 import os
-import uvicorn
 
 from agents.narrative_agent import NarrativeAgent
 from services.sodex_service import SoDEXService
-from services.hermes_service import HermesService
 from services.sosovalue_service import SoSoValueService
+from services.hermes_service import explain_topic
 
 agent = None
 sodex_service = None
-hermes_service = None
 sosovalue_service = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global agent, sodex_service, hermes_service, sosovalue_service
+    global agent, sodex_service, sosovalue_service
     agent = NarrativeAgent()
     sodex_service = SoDEXService()
-    hermes_service = HermesService()
     sosovalue_service = SoSoValueService()
     yield
 
@@ -45,80 +42,94 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/")
-async def root():
-    return {"status": "NarrativeOS backend running"}
-
 class ExplainRequest(BaseModel):
     topic: str
 
+@app.get("/")
+async def root():
+    try:
+        return {"status": "NarrativeOS backend running", "version": "1.0"}
+    except Exception as e:
+        return {"status": "Error", "error": str(e)}
+
 @app.get("/health")
 async def health():
-    return {
-        "status": "ok",
-        "service": "NarrativeOS",
-        "timestamp": datetime.now(timezone.utc).isoformat()
-    }
+    try:
+        return {
+            "status": "ok",
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
 
-@app.get("/api/analysis", response_model=None)
+@app.get("/api/analysis")
 async def get_analysis():
     try:
         return await agent.run_full_analysis()
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"Analysis error: {e}")
+        from fallback_data import FALLBACK_ANALYSIS
+        return FALLBACK_ANALYSIS
 
 @app.get("/api/signal/{symbol}")
 async def get_signal(symbol: str):
     try:
         return await agent.get_quick_signal(symbol)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"Signal error: {e}")
+        return {"signal": "WATCH", "confidence": 50, "reasoning": "Fallback", "timeframe": "short", "symbol": symbol}
 
 @app.get("/api/markets")
 async def get_markets():
     try:
         return await sodex_service.get_all_markets()
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"Markets error: {e}")
+        return []
 
 @app.get("/api/tickers")
 async def get_tickers():
     try:
         return await sodex_service.get_ticker_all()
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"Tickers error: {e}")
+        from fallback_data import FALLBACK_TICKERS
+        return FALLBACK_TICKERS
 
 @app.get("/api/news")
 async def get_news():
-    """Fetch hot crypto news from SoSoValue."""
     try:
         return await sosovalue_service.get_hot_news()
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"News error: {e}")
+        from fallback_data import FALLBACK_NEWS
+        return FALLBACK_NEWS
 
 @app.get("/api/macro")
 async def get_macro_events():
-    """Fetch macro economic events from SoSoValue."""
     try:
         return await sosovalue_service.get_macro_events()
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"Macro error: {e}")
+        return []
 
 @app.get("/api/etf/{etf_type}")
 async def get_etf_data(etf_type: str = "btc"):
-    """Fetch ETF data from SoSoValue."""
     try:
         return await sosovalue_service.get_etf_data(etf_type)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"ETF error: {e}")
+        return {}
 
 @app.post("/api/explain")
-async def explain_topic(req: ExplainRequest):
+async def explain(request: ExplainRequest):
     try:
-        explanation = await hermes_service.explain_like_im_dumb(req.topic)
-        return {"explanation": explanation}
+        from services.hermes_service import explain_topic
+        result = await explain_topic(request.topic)
+        return {"explanation": result}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"Explain error: {e}")
+        return {"explanation": "Explanation currently unavailable. Please try again."}
 
 if __name__ == "__main__":
     import uvicorn

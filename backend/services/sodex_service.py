@@ -2,6 +2,7 @@ import os
 import httpx
 import asyncio
 from dotenv import load_dotenv
+from fallback_data import FALLBACK_TICKERS
 
 load_dotenv()
 
@@ -29,35 +30,51 @@ class SoDEXService:
                 return response.json()
         except Exception as e:
             print(f"Error fetching {url}: {e}")
-            return []
+            raise e # Let caller handle to provide appropriate fallback
 
     async def get_all_markets(self, use_testnet: bool = True):
         """Fetch all available spot markets."""
-        base_url = self._get_base_url(use_testnet)
-        return await self._fetch(f"{base_url}/markets")
+        try:
+            base_url = self._get_base_url(use_testnet)
+            return await self._fetch(f"{base_url}/markets")
+        except Exception as e:
+            print(f"Error in get_all_markets: {e}")
+            return []
 
     async def get_ticker_all(self, use_testnet: bool = True):
         """Fetch all ticker data (price, volume, change%)."""
-        base_url = self._get_base_url(use_testnet)
-        return await self._fetch(f"{base_url}/ticker")
+        try:
+            base_url = self._get_base_url(use_testnet)
+            return await self._fetch(f"{base_url}/ticker")
+        except Exception as e:
+            print(f"Error in get_ticker_all: {e}")
+            return FALLBACK_TICKERS
 
     async def get_klines(self, symbol: str, interval: str = "1h", limit: int = 24, use_testnet: bool = True):
         """Candlestick data."""
-        base_url = self._get_base_url(use_testnet)
-        params = {"symbol": symbol, "interval": interval, "limit": limit}
-        return await self._fetch(f"{base_url}/klines", params)
+        try:
+            base_url = self._get_base_url(use_testnet)
+            params = {"symbol": symbol, "interval": interval, "limit": limit}
+            return await self._fetch(f"{base_url}/klines", params)
+        except Exception as e:
+            print(f"Error in get_klines: {e}")
+            return []
 
     async def get_recent_trades(self, symbol: str, limit: int = 20, use_testnet: bool = True):
         """Recent trade list."""
-        base_url = self._get_base_url(use_testnet)
-        params = {"symbol": symbol, "limit": limit}
-        return await self._fetch(f"{base_url}/trades", params)
+        try:
+            base_url = self._get_base_url(use_testnet)
+            params = {"symbol": symbol, "limit": limit}
+            return await self._fetch(f"{base_url}/trades", params)
+        except Exception as e:
+            print(f"Error in get_recent_trades: {e}")
+            return []
 
     async def get_top_movers(self, use_testnet: bool = True):
         """Parse ticker data and return top 5 gainers and top 5 losers."""
         try:
             tickers = await self.get_ticker_all(use_testnet=use_testnet)
-            if not tickers:
+            if not tickers or tickers == FALLBACK_TICKERS:
                 return {"gainers": [], "losers": []}
 
             # If it returns a dict of symbol -> data, convert to list
@@ -77,8 +94,8 @@ class SoDEXService:
                 # Accommodate various possible naming conventions for 24h change
                 change = t.get('priceChangePercent') or t.get('changePercent') or t.get('change') or t.get('24h_change')
                 try:
-                    if change is not None:
-                        t['_change_val'] = float(change)
+                    if change is not None and change != "~" and change != "0.00%":
+                        t['_change_val'] = float(str(change).replace('%',''))
                         valid_tickers.append(t)
                 except ValueError:
                     pass
@@ -111,19 +128,6 @@ if __name__ == "__main__":
     async def run_test():
         print("Testing SoDEXService...")
         service = SoDEXService()
-        
-        print("\n--- Fetching Tickers (Testnet) ---")
         tickers = await service.get_ticker_all(use_testnet=True)
-        if isinstance(tickers, list) and len(tickers) > 0:
-            print(f"Success! Retrieved {len(tickers)} tickers. First item: {tickers[0]}")
-        elif isinstance(tickers, dict) and len(tickers) > 0:
-            print(f"Success! Retrieved {len(tickers)} tickers. (Dict format)")
-        else:
-            print(f"Returned: {tickers}")
-
-        print("\n--- Fetching Top Movers ---")
-        movers = await service.get_top_movers(use_testnet=True)
-        print(f"Top 5 Gainers: {len(movers['gainers'])}")
-        print(f"Top 5 Losers: {len(movers['losers'])}")
-
+        print(f"Tickers length: {len(tickers)}")
     asyncio.run(run_test())

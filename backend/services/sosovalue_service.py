@@ -2,6 +2,7 @@ import os
 import httpx
 from typing import Dict, Any, List
 from dotenv import load_dotenv
+from fallback_data import FALLBACK_NEWS
 
 load_dotenv()
 
@@ -20,7 +21,7 @@ class SoSoValueService:
         """Generic GET request to SoSoValue API with proper error handling."""
         if not self.api_key:
             print("[SoSoValue] WARNING: SOSOVALUE_API_KEY not configured — returning empty data")
-            return []
+            raise Exception("No API Key")
             
         url = f"{self.base_url}{endpoint}"
         try:
@@ -34,13 +35,10 @@ class SoSoValueService:
                     return data
                 else:
                     print(f"[SoSoValue] HTTP {response.status_code} from {endpoint}")
-                    return []
-        except httpx.TimeoutException:
-            print(f"[SoSoValue] Timeout calling {endpoint}")
-            return []
+                    raise Exception(f"HTTP {response.status_code}")
         except Exception as e:
             print(f"[SoSoValue] Error calling {endpoint}: {e}")
-            return []
+            raise e
 
     async def get_hot_news(self) -> List[Dict]:
         """Fetch hot news from SoSoValue."""
@@ -50,10 +48,10 @@ class SoSoValueService:
                 return result["list"]
             if isinstance(result, list):
                 return result
-            return []
+            return FALLBACK_NEWS
         except Exception as e:
             print(f"Error parsing hot news: {e}")
-            return []
+            return FALLBACK_NEWS
 
     async def get_macro_events(self) -> List[Dict]:
         """Fetch macro events from SoSoValue."""

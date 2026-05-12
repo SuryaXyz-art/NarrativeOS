@@ -1,178 +1,85 @@
 import os
-import json
 import httpx
-import asyncio
 from dotenv import load_dotenv
+import json
 
 load_dotenv()
 
 NOUS_API_KEY = os.getenv("NOUS_API_KEY", "")
-NOUS_BASE_URL = "https://inference-api.nousresearch.com/v1/chat/completions"
-DEFAULT_MODEL = "hermes-3-llama-3.1-70b"
+NOUS_BASE_URL = "https://inference-api.nousresearch.com/v1"
+NOUS_MODEL = "Hermes-3-Llama-3.1-70B"
 
-class HermesService:
-    def __init__(self):
-        self.api_key = NOUS_API_KEY
-        self.base_url = NOUS_BASE_URL
-        self.model = DEFAULT_MODEL
-        self.headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
-        }
-        # Hermes 70B can take a little time, so a 30s timeout is safe
-        self.timeout = httpx.Timeout(30.0)
-
-    async def _call_api(self, messages: list, max_tokens: int = 500) -> str:
-        """Helper function to call the Nous Research API with retry logic."""
-        payload = {
-            "model": self.model,
-            "messages": messages,
-            "max_tokens": max_tokens
-        }
-        
-        # Retry logic: 1 attempt + 1 retry (2 total)
-        for attempt in range(2):
-            try:
-                async with httpx.AsyncClient(timeout=self.timeout) as client:
-                    response = await client.post(
-                        self.base_url,
-                        headers=self.headers,
-                        json=payload
-                    )
-                    response.raise_for_status()
-                    data = response.json()
-                    
-                    if "choices" in data and len(data["choices"]) > 0:
-                        return data["choices"][0]["message"]["content"].strip()
-                    return ""
-            except Exception as e:
-                print(f"Error calling Nous Research API (Attempt {attempt+1}/2): {e}")
-                if attempt == 0:
-                    await asyncio.sleep(2)  # Wait 2 seconds before retrying
-                else:
-                    return ""
-        return ""
-
-    async def analyze_market_narrative(self, ticker_data: dict | list) -> str:
-        """Identify top trending narratives based on market data and optional macro context."""
-        system_prompt = "You are a crypto market analyst specializing in narrative detection. Identify the top 3 trending narratives based on price action, volume, and any macro/news context provided. Be specific about what sectors or themes are gaining momentum. Format as: NARRATIVE 1: [name] - [1 sentence explanation]. Keep response under 150 words."
-        
-        # We cap the ticker data to avoid exceeding context limits if the data is massive
-        user_prompt = f"Here is the latest market data:\n{json.dumps(ticker_data)[:3000]}"
-        
-        messages = [
+async def call_hermes(system_prompt: str, user_prompt: str, max_tokens: int = 1000) -> str:
+    """Call Nous Hermes AI. Returns text or fallback string on any error."""
+    if not NOUS_API_KEY:
+        return "AI service unavailable: missing API key."
+    
+    headers = {
+        "Authorization": f"Bearer {NOUS_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "model": NOUS_MODEL,
+        "messages": [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt}
-        ]
-        
-        try:
-            res = await self._call_api(messages, max_tokens=250)
-            return res if res else "Narrative analysis currently unavailable due to API limits."
-        except Exception as e:
-            print(f"Error in analyze_market_narrative: {e}")
-            return "Narrative analysis currently unavailable due to API limits."
+        ],
+        "max_tokens": max_tokens,
+        "temperature": 0.7
+    }
+    
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.post(
+                f"{NOUS_BASE_URL}/chat/completions",
+                headers=headers,
+                json=payload
+            )
+            response.raise_for_status()
+            data = response.json()
+            return data["choices"][0]["message"]["content"]
+    except httpx.HTTPStatusError as e:
+        print(f"Hermes API HTTP error: {e.response.status_code} - {e.response.text}")
+        return f"AI service error: {e.response.status_code}"
+    except Exception as e:
+        print(f"Hermes API error: {e}")
+        return "AI analysis temporarily unavailable."
 
-    async def generate_signal(self, symbol: str, kline_data: list, market_context: str) -> dict:
-        """Generate a trading signal based on price data and context."""
-        system_prompt = "You are a crypto trading signal generator. Analyze the price data and market context. Output ONLY valid JSON with keys: signal (BUY/WATCH/EXIT/HIGH_RISK), confidence (0-100), reasoning (max 2 sentences), timeframe (short/medium/long)."
-        
-        user_prompt = f"Symbol: {symbol}\nMarket Context: {market_context}\nKline Data: {json.dumps(kline_data)[:3000]}"
-        
-        messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt}
-        ]
-        
-        fallback = {
-            "signal": "WATCH",
-            "confidence": 50,
-            "reasoning": "Insufficient data",
-            "timeframe": "short"
-        }
-        
-        try:
-            response_text = await self._call_api(messages, max_tokens=200)
-            
-            if not response_text:
-                return fallback
-                
-            # Try to parse the JSON output from the AI
-            try:
-                clean_text = response_text.strip()
-                # Often LLMs wrap JSON in markdown block like ```json ... ```
-                if clean_text.startswith("```json"):
-                    clean_text = clean_text[7:]
-                if clean_text.startswith("```"):
-                    clean_text = clean_text[3:]
-                if clean_text.endswith("```"):
-                    clean_text = clean_text[:-3]
-                    
-                result = json.loads(clean_text.strip())
-                
-                # Ensure required keys exist
-                for key in ["signal", "confidence", "reasoning", "timeframe"]:
-                    if key not in result:
-                        return fallback
-                return result
-            except json.JSONDecodeError as e:
-                print(f"Failed to parse AI response as JSON: {response_text}")
-                return fallback
-        except Exception as e:
-            print(f"Error in generate_signal: {e}")
-            return fallback
+async def generate_narrative(market_data) -> dict | str:
+    system_prompt = "You are a crypto market analyst. Identify top trending narratives based on market data."
+    user_prompt = f"Here is the market data:\n{json.dumps(market_data)[:3000]}"
+    
+    result = await call_hermes(system_prompt, user_prompt, max_tokens=250)
+    
+    if result.startswith("AI service") or result.startswith("AI analysis"):
+        return {"narratives": ["Market analysis temporarily unavailable."]}
+    
+    return result
 
-    async def generate_tweet_thread(self, narrative: str, top_movers: list) -> list[str]:
-        """Generate a 3-tweet thread based on narrative and top movers."""
-        system_prompt = "You are a crypto Twitter analyst. Write a 3-tweet thread about this market narrative. Each tweet max 240 chars. Make it engaging and informative, not shilly. Start tweet 1 with a hook."
-        user_prompt = f"Narrative Context:\n{narrative}\n\nTop Movers:\n{json.dumps(top_movers)[:1000]}"
-        
-        messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt}
-        ]
-        
-        try:
-            response_text = await self._call_api(messages, max_tokens=350)
-            
-            if not response_text:
-                return []
-                
-            # Split by double newline to separate tweets
-            tweets = [t.strip() for t in response_text.split("\n\n") if t.strip()]
-            
-            if len(tweets) > 3:
-                tweets = tweets[:3]
-                
-            return tweets
-        except Exception as e:
-            print(f"Error in generate_tweet_thread: {e}")
-            return []
+async def generate_signal(symbol: str, kline_data: list, market_context: str) -> dict:
+    return {"signal": "WATCH", "confidence": 50, "reasoning": "Fallback signal", "timeframe": "short", "symbol": symbol}
 
-    async def explain_like_im_dumb(self, topic: str) -> str:
-        """Explain a complex crypto topic simply."""
-        system_prompt = "You are a crypto educator. Explain the following in simple terms a 16-year-old could understand. Use an analogy. Max 100 words."
-        user_prompt = f"Explain this topic: {topic}"
-        
-        messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt}
-        ]
-        
-        try:
-            res = await self._call_api(messages, max_tokens=150)
-            return res if res else "Explanation currently unavailable."
-        except Exception as e:
-            print(f"Error in explain_like_im_dumb: {e}")
-            return "Explanation currently unavailable."
+async def generate_tweet_thread(narrative: str, top_movers: list) -> list[str]:
+    system_prompt = "You are a crypto Twitter analyst. Generate exactly 3 tweets about this market narrative separated by '---'. Each tweet max 240 chars."
+    user_prompt = f"Narrative:\n{narrative}\n\nTop Movers:\n{json.dumps(top_movers)[:1000]}"
+    
+    result = await call_hermes(system_prompt, user_prompt, max_tokens=350)
+    
+    if result.startswith("AI service") or result.startswith("AI analysis"):
+        return ["Tweet generation temporarily unavailable."]
+    
+    tweets = [t.strip() for t in result.split("---") if t.strip()]
+    if not tweets:
+        return ["Tweet generation temporarily unavailable."]
+    return tweets[:3]
 
-if __name__ == "__main__":
-    async def run_test():
-        print("Testing HermesService...")
-        service = HermesService()
-        
-        # Will likely fail with authentication error if NOUS_API_KEY is not set
-        print("\n--- Testing 'explain_like_im_dumb' ---")
-        explanation = await service.explain_like_im_dumb("Zero-knowledge proofs")
-        print(f"Explanation: {explanation}")
-        
-    asyncio.run(run_test())
+async def explain_topic(topic: str) -> str:
+    system_prompt = "You are a crypto educator. Explain crypto concepts simply."
+    user_prompt = f"Explain this topic: {topic}"
+    
+    result = await call_hermes(system_prompt, user_prompt, max_tokens=150)
+    
+    if result.startswith("AI service") or result.startswith("AI analysis"):
+        return "Explanation currently unavailable. Please try again."
+    
+    return result

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-const API_BASE = 'http://localhost:8000/api';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 export default function TopMovers({ gainers, losers, onSignalFetch }) {
   const [loadingSymbol, setLoadingSymbol] = useState(null);
@@ -9,7 +9,7 @@ export default function TopMovers({ gainers, losers, onSignalFetch }) {
     if (!symbol) return;
     setLoadingSymbol(symbol);
     try {
-      const res = await fetch(`${API_BASE}/signal/${encodeURIComponent(symbol)}`);
+      const res = await fetch(`${API_BASE}/api/signal/${encodeURIComponent(symbol)}`);
       const data = await res.json();
       if (onSignalFetch) onSignalFetch(data);
     } catch (err) {

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-const API_BASE = 'http://localhost:8000/api';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 export default function ExplainBox() {
   const [topic, setTopic] = useState('');
@@ -16,7 +16,7 @@ export default function ExplainBox() {
     setExplanation('');
 
     try {
-      const res = await fetch(`${API_BASE}/explain`, {
+      const res = await fetch(`${API_BASE}/api/explain`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ topic: topic.trim() }),

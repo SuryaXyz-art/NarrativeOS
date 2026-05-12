@@ -8,7 +8,7 @@ import TweetThread from './components/TweetThread';
 import ExplainBox from './components/ExplainBox';
 import Toast from './components/Toast';
 
-const API_BASE = 'http://localhost:8000/api';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 const REFRESH_INTERVAL = 60;
 const TICKER_REFRESH_INTERVAL = 30;
 
@@ -50,7 +50,7 @@ export default function App() {
       setLoading(true);
     }
     try {
-      const res = await fetch(`${API_BASE}/analysis`);
+      const res = await fetch(`${API_BASE}/api/analysis`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       setAnalysisData(data);
@@ -75,7 +75,7 @@ export default function App() {
   // ─── Fetch tickers independently ───
   const fetchTickers = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/tickers`);
+      const res = await fetch(`${API_BASE}/api/tickers`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       if (Array.isArray(data)) {

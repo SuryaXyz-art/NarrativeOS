@@ -8,7 +8,7 @@ load_dotenv()
 
 NOUS_API_KEY = os.getenv("NOUS_API_KEY", "")
 NOUS_BASE_URL = "https://inference-api.nousresearch.com/v1/chat/completions"
-DEFAULT_MODEL = "Hermes-4-70B"
+DEFAULT_MODEL = "hermes-3-llama-3.1-70b"
 
 class HermesService:
     def __init__(self):
@@ -65,7 +65,12 @@ class HermesService:
             {"role": "user", "content": user_prompt}
         ]
         
-        return await self._call_api(messages, max_tokens=250)
+        try:
+            res = await self._call_api(messages, max_tokens=250)
+            return res if res else "Narrative analysis currently unavailable due to API limits."
+        except Exception as e:
+            print(f"Error in analyze_market_narrative: {e}")
+            return "Narrative analysis currently unavailable due to API limits."
 
     async def generate_signal(self, symbol: str, kline_data: list, market_context: str) -> dict:
         """Generate a trading signal based on price data and context."""
@@ -85,31 +90,35 @@ class HermesService:
             "timeframe": "short"
         }
         
-        response_text = await self._call_api(messages, max_tokens=200)
-        
-        if not response_text:
-            return fallback
-            
-        # Try to parse the JSON output from the AI
         try:
-            clean_text = response_text.strip()
-            # Often LLMs wrap JSON in markdown block like ```json ... ```
-            if clean_text.startswith("```json"):
-                clean_text = clean_text[7:]
-            if clean_text.startswith("```"):
-                clean_text = clean_text[3:]
-            if clean_text.endswith("```"):
-                clean_text = clean_text[:-3]
-                
-            result = json.loads(clean_text.strip())
+            response_text = await self._call_api(messages, max_tokens=200)
             
-            # Ensure required keys exist
-            for key in ["signal", "confidence", "reasoning", "timeframe"]:
-                if key not in result:
-                    return fallback
-            return result
-        except json.JSONDecodeError as e:
-            print(f"Failed to parse AI response as JSON: {response_text}")
+            if not response_text:
+                return fallback
+                
+            # Try to parse the JSON output from the AI
+            try:
+                clean_text = response_text.strip()
+                # Often LLMs wrap JSON in markdown block like ```json ... ```
+                if clean_text.startswith("```json"):
+                    clean_text = clean_text[7:]
+                if clean_text.startswith("```"):
+                    clean_text = clean_text[3:]
+                if clean_text.endswith("```"):
+                    clean_text = clean_text[:-3]
+                    
+                result = json.loads(clean_text.strip())
+                
+                # Ensure required keys exist
+                for key in ["signal", "confidence", "reasoning", "timeframe"]:
+                    if key not in result:
+                        return fallback
+                return result
+            except json.JSONDecodeError as e:
+                print(f"Failed to parse AI response as JSON: {response_text}")
+                return fallback
+        except Exception as e:
+            print(f"Error in generate_signal: {e}")
             return fallback
 
     async def generate_tweet_thread(self, narrative: str, top_movers: list) -> list[str]:
@@ -122,18 +131,22 @@ class HermesService:
             {"role": "user", "content": user_prompt}
         ]
         
-        response_text = await self._call_api(messages, max_tokens=350)
-        
-        if not response_text:
+        try:
+            response_text = await self._call_api(messages, max_tokens=350)
+            
+            if not response_text:
+                return []
+                
+            # Split by double newline to separate tweets
+            tweets = [t.strip() for t in response_text.split("\n\n") if t.strip()]
+            
+            if len(tweets) > 3:
+                tweets = tweets[:3]
+                
+            return tweets
+        except Exception as e:
+            print(f"Error in generate_tweet_thread: {e}")
             return []
-            
-        # Split by double newline to separate tweets
-        tweets = [t.strip() for t in response_text.split("\n\n") if t.strip()]
-        
-        if len(tweets) > 3:
-            tweets = tweets[:3]
-            
-        return tweets
 
     async def explain_like_im_dumb(self, topic: str) -> str:
         """Explain a complex crypto topic simply."""
@@ -145,7 +158,12 @@ class HermesService:
             {"role": "user", "content": user_prompt}
         ]
         
-        return await self._call_api(messages, max_tokens=150)
+        try:
+            res = await self._call_api(messages, max_tokens=150)
+            return res if res else "Explanation currently unavailable."
+        except Exception as e:
+            print(f"Error in explain_like_im_dumb: {e}")
+            return "Explanation currently unavailable."
 
 if __name__ == "__main__":
     async def run_test():

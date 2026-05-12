@@ -44,30 +44,42 @@ class SoSoValueService:
 
     async def get_hot_news(self) -> List[Dict]:
         """Fetch hot news from SoSoValue."""
-        result = await self._get("/news/hot")
-        if isinstance(result, dict) and "list" in result:
-            return result["list"]
-        if isinstance(result, list):
-            return result
-        return []
+        try:
+            result = await self._get("/news/hot")
+            if isinstance(result, dict) and "list" in result:
+                return result["list"]
+            if isinstance(result, list):
+                return result
+            return []
+        except Exception as e:
+            print(f"Error parsing hot news: {e}")
+            return []
 
     async def get_macro_events(self) -> List[Dict]:
         """Fetch macro events from SoSoValue."""
-        result = await self._get("/macro/events")
-        if isinstance(result, list):
-            return result
-        return []
+        try:
+            result = await self._get("/macro/events")
+            if isinstance(result, list):
+                return result
+            return []
+        except Exception as e:
+            print(f"Error parsing macro events: {e}")
+            return []
 
     async def get_etf_data(self, etf_type: str = "btc") -> List[Dict]:
         """Fetch ETF dashboard data from SoSoValue."""
-        symbol = etf_type.upper()
-        params = {"symbol": symbol, "country_code": "US"}
-        result = await self._get("/etfs/summary-history", params=params)
-        
-        if isinstance(result, dict) and "list" in result:
-            return result["list"]
-        if isinstance(result, list):
-            return result
-        if isinstance(result, dict) and "error" not in result:
-            return [result]
-        return []
+        try:
+            symbol = etf_type.upper()
+            params = {"symbol": symbol, "country_code": "US"}
+            result = await self._get("/etfs/summary-history", params=params)
+            
+            if isinstance(result, dict) and "list" in result:
+                return result["list"]
+            if isinstance(result, list):
+                return result
+            if isinstance(result, dict) and "error" not in result:
+                return [result]
+            return []
+        except Exception as e:
+            print(f"Error parsing ETF data: {e}")
+            return []

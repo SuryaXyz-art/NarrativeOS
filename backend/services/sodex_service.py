@@ -55,53 +55,57 @@ class SoDEXService:
 
     async def get_top_movers(self, use_testnet: bool = True):
         """Parse ticker data and return top 5 gainers and top 5 losers."""
-        tickers = await self.get_ticker_all(use_testnet=use_testnet)
-        if not tickers:
+        try:
+            tickers = await self.get_ticker_all(use_testnet=use_testnet)
+            if not tickers:
+                return {"gainers": [], "losers": []}
+
+            # If it returns a dict of symbol -> data, convert to list
+            if isinstance(tickers, dict):
+                ticker_list = []
+                for k, v in tickers.items():
+                    if isinstance(v, dict):
+                        v['symbol'] = k
+                        ticker_list.append(v)
+                tickers = ticker_list
+
+            valid_tickers = []
+            for t in tickers:
+                if not isinstance(t, dict):
+                    continue
+                
+                # Accommodate various possible naming conventions for 24h change
+                change = t.get('priceChangePercent') or t.get('changePercent') or t.get('change') or t.get('24h_change')
+                try:
+                    if change is not None:
+                        t['_change_val'] = float(change)
+                        valid_tickers.append(t)
+                except ValueError:
+                    pass
+
+            if not valid_tickers:
+                return {"gainers": [], "losers": []}
+
+            # Sort by percentage change descending
+            valid_tickers.sort(key=lambda x: x['_change_val'], reverse=True)
+
+            gainers = valid_tickers[:5]
+            for g in gainers:
+                g.pop('_change_val', None)
+
+            losers = valid_tickers[-5:]
+            # Reverse so the largest negative change is first in the losers list
+            losers.reverse()
+            for l in losers:
+                l.pop('_change_val', None)
+
+            return {
+                "gainers": gainers,
+                "losers": losers
+            }
+        except Exception as e:
+            print(f"Error parsing top movers: {e}")
             return {"gainers": [], "losers": []}
-
-        # If it returns a dict of symbol -> data, convert to list
-        if isinstance(tickers, dict):
-            ticker_list = []
-            for k, v in tickers.items():
-                if isinstance(v, dict):
-                    v['symbol'] = k
-                    ticker_list.append(v)
-            tickers = ticker_list
-
-        valid_tickers = []
-        for t in tickers:
-            if not isinstance(t, dict):
-                continue
-            
-            # Accommodate various possible naming conventions for 24h change
-            change = t.get('priceChangePercent') or t.get('changePercent') or t.get('change') or t.get('24h_change')
-            try:
-                if change is not None:
-                    t['_change_val'] = float(change)
-                    valid_tickers.append(t)
-            except ValueError:
-                pass
-
-        if not valid_tickers:
-            return {"gainers": [], "losers": []}
-
-        # Sort by percentage change descending
-        valid_tickers.sort(key=lambda x: x['_change_val'], reverse=True)
-
-        gainers = valid_tickers[:5]
-        for g in gainers:
-            g.pop('_change_val', None)
-
-        losers = valid_tickers[-5:]
-        # Reverse so the largest negative change is first in the losers list
-        losers.reverse()
-        for l in losers:
-            l.pop('_change_val', None)
-
-        return {
-            "gainers": gainers,
-            "losers": losers
-        }
 
 if __name__ == "__main__":
     async def run_test():

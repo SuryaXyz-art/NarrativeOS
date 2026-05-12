@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
+import os
 import uvicorn
 
 from agents.narrative_agent import NarrativeAgent
@@ -37,11 +38,16 @@ app.add_middleware(
         "https://narrativeonchain.netlify.app",
         "http://localhost:5173",
         "http://localhost:3000",
+        "*"
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.get("/")
+async def root():
+    return {"status": "NarrativeOS backend running"}
 
 class ExplainRequest(BaseModel):
     topic: str
@@ -114,7 +120,7 @@ async def explain_topic(req: ExplainRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-import os
 if __name__ == "__main__":
+    import uvicorn
     port = int(os.environ.get("PORT", 8000))
-    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False)
+    uvicorn.run("main:app", host="0.0.0.0", port=port)

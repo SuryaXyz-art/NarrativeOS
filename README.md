@@ -1,4 +1,4 @@
-# 🧠 NarrativeOS
+# NarrativeOS
 
 **AI-Powered Crypto Market Narrative Engine**
 
@@ -11,7 +11,7 @@
 
 ---
 
-## 🚀 What is NarrativeOS?
+## What is NarrativeOS?
 
 NarrativeOS is an **AI-powered crypto intelligence platform** that goes beyond simple price tracking. It detects emerging market narratives, generates actionable trading signals, and produces ready-to-post Twitter threads — all in real time.
 
@@ -21,11 +21,11 @@ Crypto markets move on **narratives** — DeFi summer, L2 season, AI tokens, RWA
 ### The Solution
 NarrativeOS automates the entire narrative detection pipeline:
 
-1. **📊 Market Data** → Pulls real-time tickers, top movers, and klines from **SoDEX**
-2. **📰 Macro Context** → Enriches analysis with hot news and macro events from **SoSoValue**
-3. **🧠 AI Analysis** → Sends everything to **Nous Hermes-4-70B** to detect narratives and generate signals
-4. **🐦 Content Generation** → Auto-generates Twitter-ready threads about market trends
-5. **💡 Education** → "Explain Like I'm Dumb" feature for any crypto concept
+1. ** Market Data** → Pulls real-time tickers, top movers, and klines from **SoDEX**
+2. ** Macro Context** → Enriches analysis with hot news and macro events from **SoSoValue**
+3. ** AI Analysis** → Sends everything to **Nous Hermes-4-70B** to detect narratives and generate signals
+4. ** Content Generation** → Auto-generates Twitter-ready threads about market trends
+5. ** Education** → "Explain Like I'm Dumb" feature for any crypto concept
 
 ---
 
@@ -65,7 +65,7 @@ NarrativeOS automates the entire narrative detection pipeline:
 
 ---
 
-## ⚡ Features
+## Features
 
 | Feature | Description |
 |---|---|
@@ -81,7 +81,7 @@ NarrativeOS automates the entire narrative detection pipeline:
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Layer | Technology | Purpose |
 |---|---|---|
@@ -94,7 +94,7 @@ NarrativeOS automates the entire narrative detection pipeline:
 
 ---
 
-## 📦 Quick Start
+## Quick Start
 
 ### Prerequisites
 - Python 3.10+

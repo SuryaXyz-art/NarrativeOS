@@ -1,7 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 import os
 
@@ -10,23 +9,15 @@ from services.sodex_service import SoDEXService
 from services.sosovalue_service import SoSoValueService
 from services.hermes_service import explain_topic
 
-agent = None
-sodex_service = None
-sosovalue_service = None
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    global agent, sodex_service, sosovalue_service
-    agent = NarrativeAgent()
-    sodex_service = SoDEXService()
-    sosovalue_service = SoSoValueService()
-    yield
+# Initialize at import time so the app works under serverless (no startup lifespan needed)
+agent = NarrativeAgent()
+sodex_service = SoDEXService()
+sosovalue_service = SoSoValueService()
 
 app = FastAPI(
     title="NarrativeOS API",
     description="AI-powered crypto market narrative engine",
     version="1.0.0",
-    lifespan=lifespan
 )
 
 app.add_middleware(
@@ -36,6 +27,7 @@ app.add_middleware(
         "http://localhost:5173",
         "http://localhost:3000",
     ],
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

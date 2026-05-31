@@ -1,4 +1,22 @@
-export default function SignalCard({ signal }) {
+import { useState } from 'react';
+import Sparkline from './Sparkline';
+import TradePlanModal from './TradePlanModal';
+import { prettySymbol } from '../utils/format';
+
+const closesFromKlines = (klines) => {
+  if (!Array.isArray(klines)) return [];
+  return klines
+    .map((k) => {
+      if (Array.isArray(k)) return parseFloat(k[4]); // OHLCV close
+      if (k && typeof k === 'object') return parseFloat(k.close ?? k.c ?? k.closePrice);
+      return parseFloat(k);
+    })
+    .filter((n) => isFinite(n));
+};
+
+export default function SignalCard({ signal, klines }) {
+  const [showPlan, setShowPlan] = useState(false);
+
   // Loading skeleton
   if (!signal || !signal.signal) {
     return (
@@ -27,6 +45,7 @@ export default function SignalCard({ signal }) {
   }
 
   const { signal: signalType, confidence, reasoning, timeframe, symbol } = signal;
+  const closes = closesFromKlines(klines);
 
   const signalConfig = {
     BUY: {
@@ -111,7 +130,7 @@ export default function SignalCard({ signal }) {
         {/* Symbol + Signal badge */}
         <div className="flex items-center justify-between">
           <h3 className="font-mono text-xl font-bold text-white tracking-wider">
-            {symbol || '—'}
+            {symbol ? prettySymbol(symbol) : '—'}
           </h3>
           <div className={`flex items-center gap-2 px-3 py-1.5 rounded ${cfg.bg} border ${cfg.border}`}>
             <span className={`text-lg ${cfg.color}`}>{cfg.icon}</span>
@@ -141,6 +160,14 @@ export default function SignalCard({ signal }) {
           </div>
         </div>
 
+        {/* 24h price trend */}
+        {closes.length >= 2 && (
+          <div className="bg-terminal-bg/40 border border-terminal-border/50 rounded p-2">
+            <span className="font-mono text-[10px] uppercase tracking-wider text-terminal-muted">24h Trend</span>
+            <Sparkline data={closes} />
+          </div>
+        )}
+
         {/* Reasoning */}
         {reasoning && (
           <div className="bg-terminal-bg/60 border border-terminal-border/50 rounded p-3">
@@ -150,7 +177,17 @@ export default function SignalCard({ signal }) {
             </p>
           </div>
         )}
+
+        {/* Insight → action */}
+        {(signalType === 'BUY' || signalType === 'EXIT') && (
+          <button onClick={() => setShowPlan(true)}
+            className="w-full py-2 rounded border border-accent/30 bg-accent/10 font-mono text-xs text-accent hover:bg-accent/20 transition-colors">
+            ⚡ Prepare Trade
+          </button>
+        )}
       </div>
+
+      {showPlan && <TradePlanModal signal={signal} closes={closes} onClose={() => setShowPlan(false)} />}
     </div>
   );
 }

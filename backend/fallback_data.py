@@ -21,9 +21,12 @@ FALLBACK_MOVERS = {
 }
 
 FALLBACK_ANALYSIS = {
+  "narrative_summary": "Market data loading... AI narrative will appear here shortly.",
   "narratives": ["Market data loading..."],
   "signals": [],
   "tweets": ["Market analysis loading. Please wait a moment and refresh."],
   "top_movers": FALLBACK_MOVERS,
+  "market_pulse": {"advancers": 0, "decliners": 0, "avg_change": 0, "sentiment": "NEUTRAL"},
+  "gainers_klines": {},
   "timestamp": None
 }

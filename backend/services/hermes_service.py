@@ -1,4 +1,5 @@
 import os
+import re
 import httpx
 from dotenv import load_dotenv
 import json
@@ -57,7 +58,35 @@ async def generate_narrative(market_data) -> dict | str:
     return result
 
 async def generate_signal(symbol: str, kline_data: list, market_context: str) -> dict:
-    return {"signal": "WATCH", "confidence": 50, "reasoning": "Fallback signal", "timeframe": "short", "symbol": symbol}
+    fallback = {"signal": "WATCH", "confidence": 50, "reasoning": "Signal unavailable.", "timeframe": "short", "symbol": symbol}
+    system_prompt = (
+        "You are a crypto trading analyst. Based on the candlestick data and market context, "
+        "respond with ONLY a JSON object and nothing else: "
+        '{"signal": "BUY|WATCH|EXIT|HIGH_RISK", "confidence": <0-100 int>, '
+        '"reasoning": "<one concise sentence>", "timeframe": "short|medium|long"}'
+    )
+    user_prompt = f"Symbol: {symbol}\nMarket context: {market_context[:800]}\nRecent klines: {json.dumps(kline_data)[:1500]}"
+
+    result = await call_hermes(system_prompt, user_prompt, max_tokens=200)
+    if result.startswith("AI service") or result.startswith("AI analysis"):
+        return fallback
+
+    try:
+        match = re.search(r"\{.*\}", result, re.DOTALL)
+        data = json.loads(match.group(0)) if match else {}
+        signal = str(data.get("signal", "WATCH")).upper()
+        if signal not in ("BUY", "WATCH", "EXIT", "HIGH_RISK"):
+            signal = "WATCH"
+        return {
+            "signal": signal,
+            "confidence": max(0, min(100, int(data.get("confidence", 50)))),
+            "reasoning": str(data.get("reasoning", "No reasoning provided.")),
+            "timeframe": data.get("timeframe", "short"),
+            "symbol": symbol,
+        }
+    except Exception as e:
+        print(f"Signal parse error: {e}")
+        return fallback
 
 async def generate_tweet_thread(narrative: str, top_movers: list) -> list[str]:
     system_prompt = "You are a crypto Twitter analyst. Generate exactly 3 tweets about this market narrative separated by '---'. Each tweet max 240 chars."

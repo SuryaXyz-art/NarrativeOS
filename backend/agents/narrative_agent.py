@@ -12,6 +12,40 @@ _CACHE = {
 }
 CACHE_TTL = 300  # 5 minutes
 
+
+def compute_market_pulse(tickers) -> dict:
+    """Derive market breadth (advancers/decliners, avg change, sentiment) from ticker data."""
+    if isinstance(tickers, dict):
+        rows = [{**v, "symbol": k} for k, v in tickers.items() if isinstance(v, dict)]
+    elif isinstance(tickers, list):
+        rows = [t for t in tickers if isinstance(t, dict)]
+    else:
+        rows = []
+
+    advancers = decliners = 0
+    changes = []
+    for t in rows:
+        raw = t.get("priceChangePercent") or t.get("changePercent") or t.get("change")
+        try:
+            val = float(str(raw).replace("%", "").replace("+", ""))
+        except (TypeError, ValueError):
+            continue
+        changes.append(val)
+        if val > 0:
+            advancers += 1
+        elif val < 0:
+            decliners += 1
+
+    total = advancers + decliners
+    bull_ratio = advancers / total if total else 0.5
+    sentiment = "BULLISH" if bull_ratio >= 0.6 else "BEARISH" if bull_ratio <= 0.4 else "NEUTRAL"
+    return {
+        "advancers": advancers,
+        "decliners": decliners,
+        "avg_change": round(sum(changes) / len(changes), 2) if changes else 0,
+        "sentiment": sentiment,
+    }
+
 class NarrativeAgent:
     def __init__(self):
         self.sodex = SoDEXService()
@@ -72,11 +106,12 @@ class NarrativeAgent:
             }
 
             # 5. Send enriched context to HermesService for narrative analysis
-            narrative_summary = await generate_narrative(enriched_context)
-            if isinstance(narrative_summary, dict) and "narratives" in narrative_summary:
-                # If fallback dict, just use its contents
-                narratives_list = narrative_summary["narratives"]
+            narrative_result = await generate_narrative(enriched_context)
+            if isinstance(narrative_result, dict):
+                narratives_list = narrative_result.get("narratives", [])
+                narrative_summary = narratives_list[0] if narratives_list else ""
             else:
+                narrative_summary = narrative_result or ""
                 narratives_list = [narrative_summary] if narrative_summary else []
 
             # 6. For the #1 top gainer, generate a featured signal
@@ -85,20 +120,23 @@ class NarrativeAgent:
                 top_symbol = top_gainers[0].get("symbol")
                 if top_symbol:
                     top_klines = gainers_klines.get(top_symbol, [])
-                    featured_signal = await generate_signal(top_symbol, top_klines, str(narrative_summary))
+                    featured_signal = await generate_signal(top_symbol, top_klines, narrative_summary)
                     featured_signal["symbol"] = top_symbol
 
             # 7. Generate tweet thread
-            tweet_thread = await generate_tweet_thread(str(narrative_summary), top_gainers)
+            tweet_thread = await generate_tweet_thread(narrative_summary, top_gainers)
 
             # 8. Return the structured dictionary
             result = {
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "top_movers": {"gainers": top_gainers, "losers": top_losers},
+                "narrative_summary": narrative_summary,
                 "narratives": narratives_list,
                 "signals": [featured_signal] if featured_signal else [],
                 "tweets": tweet_thread,
                 "raw_ticker_count": raw_ticker_count,
+                "market_pulse": compute_market_pulse(tickers),
+                "gainers_klines": gainers_klines,
                 "soso_hot_news": hot_news_list[:5],
                 "soso_macro_events": macro_events_list[:3]
             }

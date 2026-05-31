@@ -6,7 +6,7 @@ import io
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 
 from services.sodex_service import SoDEXService
-from services.hermes_service import HermesService
+from services.hermes_service import generate_narrative, explain_topic, NOUS_API_KEY
 from services.sosovalue_service import SoSoValueService
 from agents.narrative_agent import NarrativeAgent
 
@@ -66,14 +66,15 @@ async def main():
 
     # -- TEST 4: Hermes AI Narrative --
     print("\n=== TEST 4: Hermes AI Narrative ===")
-    hermes = HermesService()
+    print(f"  NOUS_API_KEY configured: {'Yes' if NOUS_API_KEY else 'No'}")
     if tickers:
         try:
-            sample = tickers[:10] if isinstance(tickers, list) else list(tickers.items())[:10]
-            narrative = await hermes.analyze_market_narrative(sample)
-            if narrative:
-                print(f"  [OK] Narrative generated ({len(narrative)} chars)")
-                print(f"  Preview: {narrative[:200]}...")
+            sample = tickers[:10] if isinstance(tickers, list) else dict(list(tickers.items())[:10])
+            narrative = await generate_narrative({"tickers": sample})
+            text = narrative if isinstance(narrative, str) else str(narrative)
+            if text:
+                print(f"  [OK] Narrative generated ({len(text)} chars)")
+                print(f"  Preview: {text[:200]}...")
             else:
                 print("  [WARN] Narrative returned empty (check NOUS_API_KEY)")
         except Exception as e:
@@ -84,7 +85,7 @@ async def main():
     # -- TEST 5: Explain Like I'm Dumb --
     print("\n=== TEST 5: Explain Like I'm Dumb ===")
     try:
-        explanation = await hermes.explain_like_im_dumb("Blockchain")
+        explanation = await explain_topic("Blockchain")
         if explanation:
             print(f"  [OK] Explanation generated ({len(explanation)} chars)")
             print(f"  Preview: {explanation[:150]}...")
@@ -101,10 +102,11 @@ async def main():
         print(f"  [OK] Full analysis completed!")
         print(f"  Keys: {list(result.keys())}")
         print(f"  Tickers tracked: {result.get('raw_ticker_count', '?')}")
-        signal = result.get('featured_signal', {})
+        signals = result.get('signals', [])
+        signal = signals[0] if signals else {}
         print(f"  Signal: {signal.get('signal', 'N/A')} "
               f"({signal.get('confidence', '?')}% confidence)")
-        tweets = result.get("tweet_thread", [])
+        tweets = result.get("tweets", [])
         if tweets:
             print(f"  Tweets: {len(tweets)} generated")
             print(f"  Tweet 1: {tweets[0][:100]}...")

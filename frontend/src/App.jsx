@@ -4,8 +4,12 @@ import MarketTicker from './components/MarketTicker';
 import NarrativeSummary from './components/NarrativeSummary';
 import SignalCard from './components/SignalCard';
 import TopMovers from './components/TopMovers';
+import MarketPulse from './components/MarketPulse';
+import ETFPanel from './components/ETFPanel';
 import TweetThread from './components/TweetThread';
+import NewsFeed from './components/NewsFeed';
 import ExplainBox from './components/ExplainBox';
+import ProjectShowcase from './components/ProjectShowcase';
 import Toast from './components/Toast';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -133,35 +137,14 @@ export default function App() {
   }, [showToast]);
 
   // ─── Loading screen ───
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-terminal-bg flex flex-col items-center justify-center gap-6">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 border border-accent/50 flex items-center justify-center">
-            <span className="text-accent font-mono font-bold text-xl">N</span>
-          </div>
-          <div>
-            <h1 className="font-mono font-bold text-2xl tracking-wider text-white">
-              NARRATIVE <span className="text-accent">OS</span>
-            </h1>
-          </div>
-        </div>
-        <div className="flex flex-col items-center gap-3">
-          <div className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-            <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" style={{ animationDelay: '0.2s' }} />
-            <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" style={{ animationDelay: '0.4s' }} />
-          </div>
-          <p className="font-mono text-xs text-terminal-muted">
-            Initializing market intelligence...
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-terminal-bg flex flex-col">
+      {/* Project showcase / landing — always visible above the live terminal */}
+      <ProjectShowcase />
+
+      {/* ─── Live terminal ─── */}
+      <div id="dashboard">
+      {loading && <div className="h-0.5 bg-accent/40 animate-pulse" />}
       {/* Market ticker bar — full width */}
       <MarketTicker tickers={tickers} />
 
@@ -198,6 +181,7 @@ export default function App() {
 
           {/* Left column (1/4): TopMovers + Market Stats */}
           <div className="lg:col-span-1 space-y-4">
+            <MarketPulse pulse={analysisData?.market_pulse} />
             <TopMovers
               gainers={analysisData?.top_movers?.gainers || analysisData?.top_gainers || []}
               losers={analysisData?.top_movers?.losers || analysisData?.top_losers || []}
@@ -231,6 +215,7 @@ export default function App() {
                 </div>
               </div>
             </div>
+            <ETFPanel />
           </div>
 
           {/* Center column (2/4): NarrativeSummary + SignalCard */}
@@ -240,14 +225,18 @@ export default function App() {
               timestamp={analysisData?.timestamp || ''}
               onCopy={handleNarrativeCopy}
             />
-            <SignalCard signal={activeSignal} />
+            <SignalCard signal={activeSignal} klines={analysisData?.gainers_klines?.[activeSignal?.symbol]} />
           </div>
 
-          {/* Right column (1/4): TweetThread */}
+          {/* Right column (1/4): TweetThread + Market Intel */}
           <div className="lg:col-span-1 space-y-4">
             <TweetThread
               tweets={analysisData?.tweets || analysisData?.tweet_thread || []}
               onRefresh={handleRefreshNow}
+            />
+            <NewsFeed
+              news={analysisData?.soso_hot_news || []}
+              events={analysisData?.soso_macro_events || []}
             />
           </div>
         </div>
@@ -261,9 +250,10 @@ export default function App() {
       {/* Footer */}
       <footer className="border-t border-terminal-border px-6 py-4">
         <p className="text-center font-mono text-[11px] text-terminal-muted/60">
-          Built for Wave Hacks 2025 &nbsp;│&nbsp; Powered by SoDEX + Nous Hermes AI &nbsp;│&nbsp; Not financial advice
+          Built for the SoSoValue Agentic Finance Hackathon &nbsp;│&nbsp; Powered by SoSoValue + SoDEX + Nous Hermes AI &nbsp;│&nbsp; Not financial advice
         </p>
       </footer>
+      </div>
     </div>
   );
 }

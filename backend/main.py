@@ -35,7 +35,6 @@ app.add_middleware(
         "https://narrativeonchain.netlify.app",
         "http://localhost:5173",
         "http://localhost:3000",
-        "*"
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -124,7 +123,6 @@ async def get_etf_data(etf_type: str = "btc"):
 @app.post("/api/explain")
 async def explain(request: ExplainRequest):
     try:
-        from services.hermes_service import explain_topic
         result = await explain_topic(request.topic)
         return {"explanation": result}
     except Exception as e:

@@ -5,7 +5,7 @@ import io
 # Fix Windows console encoding
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 
-from services.hermes_service import HermesService
+from services.hermes_service import explain_topic, NOUS_API_KEY
 from services.sosovalue_service import SoSoValueService
 
 async def main():
@@ -50,12 +50,10 @@ async def main():
 
     # -- Hermes AI Tests --
     print("\n--- Nous Hermes AI ---")
-    hermes = HermesService()
-    
-    print(f"  API Key configured: {'Yes' if hermes.api_key else 'No'}")
+    print(f"  API Key configured: {'Yes' if NOUS_API_KEY else 'No'}")
     
     try:
-        result = await hermes.explain_like_im_dumb("Blockchain")
+        result = await explain_topic("Blockchain")
         if result:
             print(f"  [OK] Hermes Output ({len(result)} chars): {result[:120]}...")
         else:

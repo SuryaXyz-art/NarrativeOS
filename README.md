@@ -1,67 +1,33 @@
 # NarrativeOS
 
-**AI-Powered Crypto Market Narrative Engine**
+**An agentic crypto intelligence desk — from market data to actionable decisions, in real time.**
 
-> Real-time market intelligence that detects narratives, generates trading signals, and creates Twitter-ready content — all powered by AI.
+NarrativeOS fuses live market data, macro context, and AI reasoning into a single autonomous workflow. It detects the *narratives* moving the market, scores trading signals, drafts publishable commentary, and turns every insight into a risk-managed, reviewable trade plan — the output of an entire research team, run by one agent.
 
-[![Built for Wave Hacks 2025](https://img.shields.io/badge/Wave%20Hacks-2025-00ff88?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNCIgZmlsbD0iIzBhMGEwYSIvPjx0ZXh0IHg9IjE2IiB5PSIyMiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9Im1vbm9zcGFjZSIgZm9udC13ZWlnaHQ9ImJvbGQiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiMwMGZmODgiPk48L3RleHQ+PC9zdmc+)](https://github.com/SuryaXyz-art/NarrativeOS)
-[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
-[![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+<p align="center">
+  <img alt="Python" src="https://img.shields.io/badge/Python-3.10+-3776AB?style=flat-square&logo=python&logoColor=white" />
+  <img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white" />
+  <img alt="React" src="https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black" />
+  <img alt="Vite" src="https://img.shields.io/badge/Vite-646CFF?style=flat-square&logo=vite&logoColor=white" />
+  <img alt="License" src="https://img.shields.io/badge/License-MIT-green?style=flat-square" />
+</p>
 
----
-
-## What is NarrativeOS?
-
-NarrativeOS is an **AI-powered crypto intelligence platform** that goes beyond simple price tracking. It detects emerging market narratives, generates actionable trading signals, and produces ready-to-post Twitter threads — all in real time.
-
-### The Problem
-Crypto markets move on **narratives** — DeFi summer, L2 season, AI tokens, RWA hype. Traders who spot these narratives early win. But monitoring hundreds of tokens, reading news, and connecting dots manually is impossible.
-
-### The Solution
-NarrativeOS automates the entire narrative detection pipeline:
-
-1. ** Market Data** → Pulls real-time tickers, top movers, and klines from **SoDEX**
-2. ** Macro Context** → Enriches analysis with hot news and macro events from **SoSoValue**
-3. ** AI Analysis** → Sends everything to **Nous Hermes-4-70B** to detect narratives and generate signals
-4. ** Content Generation** → Auto-generates Twitter-ready threads about market trends
-5. ** Education** → "Explain Like I'm Dumb" feature for any crypto concept
+> Built for the **SoSoValue Agentic Finance Hackathon**.
 
 ---
 
-## 🏗️ Architecture
+## Why NarrativeOS
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        FRONTEND (React + Vite)                  │
-│  ┌──────────┐ ┌──────────────┐ ┌────────────┐ ┌─────────────┐  │
-│  │  Market   │ │  Narrative   │ │   Signal   │ │    Tweet    │  │
-│  │  Ticker   │ │   Summary    │ │    Card    │ │   Thread    │  │
-│  │   Bar     │ │  (Typewriter)│ │ (BUY/SELL) │ │  Generator  │  │
-│  └──────────┘ └──────────────┘ └────────────┘ └─────────────┘  │
-│  ┌──────────┐ ┌──────────────┐ ┌────────────────────────────┐  │
-│  │   Top    │ │   Explain    │ │     Market Stats Panel     │  │
-│  │  Movers  │ │     Box      │ │   (Live Refresh Counter)   │  │
-│  └──────────┘ └──────────────┘ └────────────────────────────┘  │
-└────────────────────────┬────────────────────────────────────────┘
-                         │ HTTP/REST
-┌────────────────────────┴────────────────────────────────────────┐
-│                    BACKEND (FastAPI + Python)                    │
-│                                                                  │
-│  ┌──────────────────────────────────────────────────────────┐   │
-│  │              NarrativeAgent (Orchestrator)                │   │
-│  │  Coordinates all services into a unified analysis pipeline│   │
-│  └────────┬──────────────┬──────────────────┬───────────────┘   │
-│           │              │                  │                    │
-│  ┌────────▼──────┐ ┌─────▼────────┐ ┌──────▼─────────┐         │
-│  │  SoDEXService │ │HermesService │ │SoSoValueService│         │
-│  │  (Market Data)│ │ (Nous AI)    │ │ (Macro/News)   │         │
-│  └───────────────┘ └──────────────┘ └────────────────┘         │
-└─────────────────────────────────────────────────────────────────┘
-         │                    │                  │
-    SoDEX API          Nous Research       SoSoValue API
-  (Spot + Perps)      Hermes-4-70B        (News + Macro + ETF)
-```
+Crypto trades on **narratives** — DeFi summer, L2 season, AI tokens, RWA, ETF flows. Spotting them early means monitoring hundreds of tickers, reading endless news, and connecting macro dots in real time. No individual can do that by hand.
+
+NarrativeOS automates the entire loop: **Ingest → Analyze → Signal → Act**.
+
+| Stage | What happens |
+|---|---|
+| **Ingest** | Live tickers, top movers & klines from **SoDEX**; hot news, macro events & spot-ETF flows from **SoSoValue**. |
+| **Analyze** | **Nous Hermes-4-70B** reads the combined market + macro context and detects the dominant narratives. |
+| **Signal** | Per-asset `BUY` / `WATCH` / `EXIT` / `HIGH_RISK` calls with a confidence score and one-line rationale, derived from real candles. |
+| **Act** | Risk-managed trade plans (entry, stop, target, position size) behind a confirmation gate, plus copy-ready tweet threads and plain-English explanations. |
 
 ---
 
@@ -69,28 +35,37 @@ NarrativeOS automates the entire narrative detection pipeline:
 
 | Feature | Description |
 |---|---|
-| **Narrative Detection** | AI identifies top 3 trending narratives from market data |
-| **Trading Signals** | BUY / WATCH / EXIT / HIGH_RISK signals with confidence scores |
-| **Top Movers** | Real-time gainers & losers with click-to-analyze |
-| **Tweet Generator** | Auto-generated 3-tweet threads about market trends |
-| **Explain Like I'm Dumb** | AI explains any crypto concept in simple terms |
-| **Live Market Ticker** | Scrolling ticker bar with real-time price data |
-| **Macro Context** | Enriched with SoSoValue news and macro event data |
-| **Auto-Refresh** | 60s analysis refresh + 30s ticker refresh cycles |
-| **Caching** | 5-minute server-side cache to avoid API rate limits |
+| **Narrative Detection** | AI surfaces the stories driving the market, not just prices. |
+| **Trading Signals** | Confidence-scored `BUY/WATCH/EXIT/HIGH_RISK` with transparent reasoning. |
+| **Trade Plans** | Risk-sized entry/stop/target with R:R and a confirmation gate — **non-custodial**, no order is placed. |
+| **Market Pulse** | Real-time breadth gauge: advancers vs decliners, average change, sentiment. |
+| **Market Intel** | SoSoValue hot news + macro event calendar in one feed. |
+| **ETF Net Flows** | Daily BTC & ETH spot-ETF inflows from SoSoValue. |
+| **24h Sparkline** | Inline price trend on the featured signal, drawn from real klines. |
+| **Tweet Threads** | Auto-generated, copy-ready market commentary. |
+| **Explain Mode** | "Explain like I'm dumb" for any crypto concept. |
+| **Live Terminal** | Auto-refreshing dashboard (60s analysis / 30s tickers) with graceful fallbacks. |
 
 ---
 
-## Tech Stack
+## Architecture
 
-| Layer | Technology | Purpose |
-|---|---|---|
-| **Frontend** | React 19 + Vite + Tailwind CSS | Terminal-style dashboard UI |
-| **Backend** | Python + FastAPI + Uvicorn | REST API + orchestration |
-| **AI Engine** | Nous Research Hermes-4-70B | Narrative analysis & signal generation |
-| **Market Data** | SoDEX API (Spot + Perps) | Real-time tickers, klines, trades |
-| **Macro Data** | SoSoValue API | Hot news, macro events, ETF data |
-| **Deployment** | Netlify (frontend) | Static hosting with SPA routing |
+```
+┌────────────────────────── Frontend (React 19 + Vite + Tailwind) ──────────────────────────┐
+│  Project Showcase (scrollable) → Live Terminal:                                            │
+│  MarketTicker · MarketPulse · TopMovers · ETFPanel · NarrativeSummary · SignalCard         │
+│  (+ TradePlanModal) · TweetThread · NewsFeed · ExplainBox                                  │
+└───────────────────────────────────────────┬────────────────────────────────────────────────┘
+                                             │ REST
+┌───────────────────────────────────────────┴──────────────── Backend (FastAPI) ───────────┐
+│                              NarrativeAgent (orchestrator + 5-min cache)                   │
+│   ┌────────────────┐        ┌────────────────┐        ┌──────────────────────────────┐     │
+│   │  SoDEXService  │        │ hermes_service │        │      SoSoValueService        │     │
+│   │ tickers/klines │        │  Nous Hermes   │        │  news / macro / ETF flows    │     │
+│   └────────────────┘        └────────────────┘        └──────────────────────────────┘     │
+└────────────────────────────────────────────────────────────────────────────────────────────┘
+        SoDEX REST v1                Nous Inference API              SoSoValue OpenAPI v1
+```
 
 ---
 
@@ -99,182 +74,130 @@ NarrativeOS automates the entire narrative detection pipeline:
 ### Prerequisites
 - Python 3.10+
 - Node.js 18+
-- API keys for [Nous Research](https://nousresearch.com) and [SoSoValue](https://sosovalue.com)
+- API keys: **SoSoValue** and **Nous Research** (SoDEX market data needs no key)
 
-### 1. Clone the repo
-
-```bash
-git clone https://github.com/SuryaXyz-art/NarrativeOS.git
-cd NarrativeOS
-```
-
-### 2. Set up environment variables
-
+### 1. Configure environment
 ```bash
 cp .env.example .env
-# Edit .env with your API keys
 ```
-
 | Variable | Required | Description |
 |---|---|---|
-| `NOUS_API_KEY` | ✅ Yes | Nous Research API key for Hermes-4-70B |
-| `SOSOVALUE_API_KEY` | ✅ Yes | SoSoValue API key for macro/news data |
-| `SODEX_*` | ❌ No | SoDEX URLs (defaults provided) |
+| `SOSOVALUE_API_KEY` | ✅ | SoSoValue key — get it at https://sosovalue.com/developer/dashboard |
+| `NOUS_API_KEY` | ✅ | Nous Research key for Hermes-4-70B |
+| `SODEX_*` | ❌ | SoDEX REST URLs (working defaults provided) |
 
-### 3. Start the backend
-
+### 2. Backend
 ```bash
 cd backend
 pip install -r requirements.txt
-python main.py
+python main.py          # http://localhost:8000
 ```
 
-The API will be available at `http://localhost:8000`. Verify with:
-```bash
-curl http://localhost:8000/health
-```
-
-### 4. Start the frontend
-
+### 3. Frontend
 ```bash
 cd frontend
 npm install
-npm run dev
-```
-
-Open `http://localhost:5173` in your browser.
-
-### 5. Run tests
-
-```bash
-cd backend
-python test_pipeline.py        # Full pipeline test
-python test_integrations.py    # SoSoValue + Hermes integration test
+npm run dev             # http://localhost:5173
 ```
 
 ---
 
-## 🔌 API Reference
+## API Reference
 
 | Method | Endpoint | Description |
 |---|---|---|
 | `GET` | `/health` | Health check + timestamp |
-| `GET` | `/api/analysis` | Full AI market analysis (cached 5 min) |
-| `GET` | `/api/signal/{symbol}` | Quick signal for a single symbol |
-| `GET` | `/api/markets` | All available SoDEX markets |
-| `GET` | `/api/tickers` | All ticker data (price, volume, change%) |
-| `GET` | `/api/news` | Hot crypto news from SoSoValue |
-| `GET` | `/api/macro` | Macro economic events from SoSoValue |
-| `GET` | `/api/etf/{type}` | ETF data from SoSoValue (btc/eth) |
-| `POST` | `/api/explain` | AI explanation of a crypto topic |
-
-### Example: POST /api/explain
-
-```json
-{
-  "topic": "What are zero-knowledge proofs?"
-}
-```
+| `GET` | `/api/analysis` | Full AI analysis (narratives, signals, movers, pulse, tweets, news, macro) — cached 5 min |
+| `GET` | `/api/signal/{symbol}` | Quick AI signal for one symbol |
+| `GET` | `/api/tickers` | All SoDEX tickers |
+| `GET` | `/api/markets` | All SoDEX trading symbols |
+| `GET` | `/api/news` | SoSoValue hot news |
+| `GET` | `/api/macro` | SoSoValue macro events |
+| `GET` | `/api/etf/{type}` | SoSoValue spot-ETF flows (`btc` / `eth`) |
+| `POST` | `/api/explain` | AI explanation of a crypto topic — body: `{ "topic": "..." }` |
 
 ---
 
-## 🧪 Testing
+## Integrations
 
-### Backend Pipeline Test
+### SoSoValue — `https://openapi.sosovalue.com/openapi/v1` (header `x-soso-api-key`)
+| Method | Endpoint | Used for |
+|---|---|---|
+| `GET` | `/news/hot` | Hot crypto news feed |
+| `GET` | `/macro/events` | Macroeconomic event calendar |
+| `GET` | `/etfs/summary-history` | BTC / ETH spot-ETF net flows |
+
+### SoDEX — public REST v1 (`https://testnet-gw.sodex.dev/api/v1/spot`, unsigned reads)
+| Method | Endpoint | Used for |
+|---|---|---|
+| `GET` | `/markets/tickers` | 24h ticker stats (price, change, volume) |
+| `GET` | `/markets/symbols` | Trading symbols & rules |
+| `GET` | `/markets/{symbol}/klines` | Candlesticks for signals & sparklines |
+
+### Nous Research
+`Hermes-4-70B` via the Nous inference API — narrative detection, signal generation, tweet drafting, and explanations.
+
+---
+
+## Testing
 ```bash
 cd backend
-python test_pipeline.py
+python test_integrations.py    # SoSoValue + Nous connectivity
+python test_pipeline.py        # Full SoDEX → AI → signal pipeline
 ```
 
-Tests the full pipeline:
-1. SoDEX connection + ticker fetch
-2. Top movers calculation
-3. Hermes AI narrative generation
-4. Full agent orchestration (tickers → AI → signals → tweets)
-
-### Integration Test
-```bash
-cd backend
-python test_integrations.py
-```
-
-Tests individual service integrations:
-1. SoSoValue hot news endpoint
-2. SoSoValue macro events endpoint
-3. Nous Hermes AI explanation
-
-### Frontend Build
 ```bash
 cd frontend
-npm run build
+npm run build                  # Production build
 ```
 
 ---
 
-## 📁 Project Structure
-
+## Project Structure
 ```
 NarrativeOS/
 ├── backend/
-│   ├── agents/
-│   │   ├── narrative_agent.py    # Main orchestrator
-│   │   └── signal_agent.py       # Signal generation (reserved)
+│   ├── agents/narrative_agent.py     # Orchestrator + market-pulse + cache
 │   ├── services/
-│   │   ├── sodex_service.py      # SoDEX market data
-│   │   ├── hermes_service.py     # Nous Hermes AI
-│   │   └── sosovalue_service.py  # SoSoValue macro/news
-│   ├── main.py                   # FastAPI server
-│   ├── test_pipeline.py          # Full pipeline test
-│   ├── test_integrations.py      # Service integration tests
-│   └── requirements.txt
-├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── Header.jsx
-│   │   │   ├── MarketTicker.jsx
-│   │   │   ├── NarrativeSummary.jsx
-│   │   │   ├── SignalCard.jsx
-│   │   │   ├── TopMovers.jsx
-│   │   │   ├── TweetThread.jsx
-│   │   │   ├── ExplainBox.jsx
-│   │   │   └── Toast.jsx
-│   │   ├── App.jsx
-│   │   ├── main.jsx
-│   │   └── index.css
-│   ├── index.html
-│   ├── tailwind.config.js
-│   ├── vite.config.js
-│   └── netlify.toml
-├── .env.example
-├── .gitignore
-└── README.md                     # ← You are here
+│   │   ├── sodex_service.py          # SoDEX market data
+│   │   ├── hermes_service.py         # Nous AI: narrative, signal, tweets, explain
+│   │   └── sosovalue_service.py      # SoSoValue news / macro / ETF
+│   ├── fallback_data.py              # Graceful-degradation defaults
+│   ├── main.py                       # FastAPI app
+│   └── test_pipeline.py / test_integrations.py
+└── frontend/src/
+    ├── components/                   # Showcase, terminal panels, TradePlanModal, Sparkline …
+    ├── utils/format.js               # Symbol prettifier (vBTC_vUSDC → BTC/USDC)
+    └── App.jsx
 ```
 
 ---
 
-## 🏆 Hackathon Submission
+## Hackathon Alignment
 
-**Event:** Wave Hacks 2025
-
-**Tracks:**
-- AI / Machine Learning
-- DeFi / Trading Tools
-
-**What makes NarrativeOS unique:**
-1. **Multi-source intelligence** — Combines SoDEX market data + SoSoValue macro context + Nous AI analysis
-2. **Narrative-first approach** — Doesn't just track prices; identifies the *stories* driving markets
-3. **Actionable output** — Signals, tweets, and explanations — not just raw data
-4. **Production-ready architecture** — Caching, error handling, graceful fallbacks, auto-refresh
+- ✅ **Genuine SoSoValue integration** — news, macro, and ETF-flow endpoints, live.
+- ✅ **Clear use case** — a one-person financial news + signal desk.
+- ✅ **Complete flow** — data input → AI insight → actionable, risk-managed output.
+- ⭐ **SoDEX integration** — live market data and candlesticks.
+- ⭐ **AI-enhanced** — narrative discovery, signals, and market explanations.
+- ⭐ **Risk control & confirmation** — confidence scores, `HIGH_RISK` flags, a non-custodial trade-plan confirmation gate, and clear disclaimers.
 
 ---
 
-## 📄 License
-
-MIT License — see [LICENSE](LICENSE) for details.
+## Resources
+- [SoSoValue API Docs](https://sosovalue-1.gitbook.io/sosovalue-api-doc)
+- [SoDEX API Docs](https://sodex.com/documentation/api/api)
+- [Common Free-Tier APIs](https://www.notion.so/Common-APIs-167b57bd102a4c03b8f2421108fc66eb)
 
 ---
 
-<p align="center">
-  <strong>Built with 🧠 by <a href="https://github.com/SuryaXyz-art">SuryaXyz-art</a></strong><br/>
-  <sub>Powered by SoDEX • Nous Research Hermes-4-70B • SoSoValue</sub>
-</p>
+## Security
+- Never commit real keys. `.env` is git-ignored; `.env.example` ships placeholders only.
+- If a key is ever exposed, **rotate it** in the provider dashboard immediately.
+- The trade-plan feature is **non-custodial** — it stages a reviewable plan and never holds keys or places orders.
+
+## Disclaimer
+NarrativeOS is an analytics tool, **not financial advice**. Signals are AI-generated and may be wrong. Always do your own research and manage risk.
+
+## License
+MIT — see [LICENSE](LICENSE).

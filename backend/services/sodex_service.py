@@ -27,16 +27,20 @@ class SoDEXService:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 response = await client.get(url, headers=self.headers, params=params)
                 response.raise_for_status()
-                return response.json()
+                data = response.json()
+                # SoDEX wraps payloads in {code, data, timestamp}
+                if isinstance(data, dict) and "data" in data:
+                    return data["data"]
+                return data
         except Exception as e:
             print(f"Error fetching {url}: {e}")
             raise e # Let caller handle to provide appropriate fallback
 
     async def get_all_markets(self, use_testnet: bool = True):
-        """Fetch all available spot markets."""
+        """Fetch all available spot markets (trading symbols)."""
         try:
             base_url = self._get_base_url(use_testnet)
-            return await self._fetch(f"{base_url}/markets")
+            return await self._fetch(f"{base_url}/markets/symbols")
         except Exception as e:
             print(f"Error in get_all_markets: {e}")
             return []
@@ -45,17 +49,17 @@ class SoDEXService:
         """Fetch all ticker data (price, volume, change%)."""
         try:
             base_url = self._get_base_url(use_testnet)
-            return await self._fetch(f"{base_url}/ticker")
+            return await self._fetch(f"{base_url}/markets/tickers")
         except Exception as e:
             print(f"Error in get_ticker_all: {e}")
             return FALLBACK_TICKERS
 
     async def get_klines(self, symbol: str, interval: str = "1h", limit: int = 24, use_testnet: bool = True):
-        """Candlestick data."""
+        """Candlestick data. Symbol is a path param, e.g. vBTC_vUSDC."""
         try:
             base_url = self._get_base_url(use_testnet)
-            params = {"symbol": symbol, "interval": interval, "limit": limit}
-            return await self._fetch(f"{base_url}/klines", params)
+            params = {"interval": interval, "limit": limit}
+            return await self._fetch(f"{base_url}/markets/{symbol}/klines", params)
         except Exception as e:
             print(f"Error in get_klines: {e}")
             return []
@@ -64,8 +68,8 @@ class SoDEXService:
         """Recent trade list."""
         try:
             base_url = self._get_base_url(use_testnet)
-            params = {"symbol": symbol, "limit": limit}
-            return await self._fetch(f"{base_url}/trades", params)
+            params = {"limit": limit}
+            return await self._fetch(f"{base_url}/markets/{symbol}/trades", params)
         except Exception as e:
             print(f"Error in get_recent_trades: {e}")
             return []
@@ -92,8 +96,8 @@ class SoDEXService:
                 if not isinstance(t, dict):
                     continue
                 
-                # Accommodate various possible naming conventions for 24h change
-                change = t.get('priceChangePercent') or t.get('changePercent') or t.get('change') or t.get('24h_change')
+                # SoDEX SpotTicker uses changePct; keep fallbacks for other shapes
+                change = t.get('changePct') or t.get('priceChangePercent') or t.get('changePercent') or t.get('24h_change')
                 try:
                     if change is not None and change != "~" and change != "0.00%":
                         t['_change_val'] = float(str(change).replace('%',''))

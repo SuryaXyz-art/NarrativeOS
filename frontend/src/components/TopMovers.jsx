@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { prettySymbol } from '../utils/format';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -21,13 +22,13 @@ export default function TopMovers({ gainers, losers, onSignalFetch }) {
 
   const getSymbol = (item) => item.symbol || item.pair || '???';
   const getChange = (item) => {
-    const raw = String(item.priceChangePercent || item.changePercent || item.change || '0');
+    const raw = String(item.changePct ?? item.priceChangePercent ?? item.changePercent ?? '0');
     const val = parseFloat(raw.replace('%', '').replace('+', ''));
     // Preserve negative sign
     const sign = raw.trim().startsWith('-') ? -1 : 1;
     return isNaN(val) ? 0 : sign * Math.abs(val);
   };
-  const getPrice = (item) => item.lastPrice || item.price || item.last || '—';
+  const getPrice = (item) => item.lastPx || item.lastPrice || item.price || item.last || '—';
   const getVolume = (item) => {
     const v = parseFloat(item.volume || item.quoteVolume || 0);
     if (isNaN(v) || v === 0) return '—';
@@ -52,7 +53,7 @@ export default function TopMovers({ gainers, losers, onSignalFetch }) {
         <div className="flex items-center gap-2 min-w-0">
           <span className="text-terminal-muted text-[10px] font-mono w-4 text-right">{idx + 1}</span>
           <span className={`font-mono text-xs font-semibold truncate ${isLoading ? 'animate-pulse text-accent' : 'text-white/90 group-hover:text-white'}`}>
-            {symbol}
+            {prettySymbol(symbol)}
           </span>
         </div>
         <div className="flex items-center gap-3">
